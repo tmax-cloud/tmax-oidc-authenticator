@@ -44,7 +44,6 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "true").Msgf("query token %s, continue", s.authHeaderKey)
 			authToken = queryToken
-			r.URL.Query().Del("token")
 		}
 	} else {
 		authHeader := r.Header.Clone().Get(s.authHeaderKey)
@@ -68,6 +67,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 		le.Str(k, v)
 	}
 	rw.Header().Set(s.tokenValidatedHeaderKey, "true")
+	rw.Header().Set(s.authHeaderKey, authToken)
 	le.Str(s.tokenValidatedHeaderKey, "true")
 	le.Int(statusKey, http.StatusOK).Msg("ok")
 	rw.WriteHeader(http.StatusOK)
