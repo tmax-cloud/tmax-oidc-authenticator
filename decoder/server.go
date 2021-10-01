@@ -67,7 +67,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 		le.Str(k, v)
 	}
 	rw.Header().Set(s.tokenValidatedHeaderKey, "true")
-	rw.Header().Set(s.authHeaderKey, authToken)
+	rw.Header().Set(s.authHeaderKey, "Bearer "+authToken)
 	le.Str(s.tokenValidatedHeaderKey, "true")
 	le.Int(statusKey, http.StatusOK).Msg("ok")
 	rw.WriteHeader(http.StatusOK)
