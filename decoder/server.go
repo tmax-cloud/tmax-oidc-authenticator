@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	zLog "github.com/rs/zerolog/log"
+	"helm.sh/helm/log"
 )
 
 const (
@@ -28,6 +29,7 @@ func NewServer(decoder TokenDecoder, authHeaderKey, tokenValidatedHeaderKey stri
 // DecodeToken http handler
 func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check url %v", r.URL)
 	log := zLog.Ctx(ctx)
 	var authToken string
 	if _, ok := r.Header[s.authHeaderKey]; !ok {
