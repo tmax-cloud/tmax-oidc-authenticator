@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	c "github.com/SimonSchneider/traefik-jwt-decode/config"
+	c "github.com/jinsoo-youn/traefik-jwt-decode/config"
 
-	dt "github.com/SimonSchneider/traefik-jwt-decode/decodertest"
+	dt "github.com/jinsoo-youn/traefik-jwt-decode/decodertest"
 )
 
 var (

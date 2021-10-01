@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/SimonSchneider/traefik-jwt-decode/config"
+	"github.com/jinsoo-youn/traefik-jwt-decode/config"
 )
 
 func main() {

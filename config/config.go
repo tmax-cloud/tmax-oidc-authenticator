@@ -17,8 +17,8 @@ import (
 
 	"github.com/rs/zerolog/hlog"
 
-	"github.com/SimonSchneider/traefik-jwt-decode/decoder"
 	"github.com/dgraph-io/ristretto"
+	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
 	"github.com/rs/zerolog"
 )
 

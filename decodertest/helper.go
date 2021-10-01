@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SimonSchneider/traefik-jwt-decode/decoder"
+	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
 
 	"github.com/rs/zerolog"
 
