@@ -32,11 +32,18 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 	if _, ok := r.Header[s.authHeaderKey]; !ok {
 		log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("no auth header %s, early exit", s.authHeaderKey)
 		rw.Header().Set(s.tokenValidatedHeaderKey, "false")
-		rw.WriteHeader(http.StatusOK)
+		rw.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	authHeader := r.Header.Get(s.authHeaderKey)
-	t, err := s.decoder.Decode(ctx, strings.TrimPrefix(authHeader, "Bearer "))
+	authToken := strings.TrimPrefix(authHeader, "Bearer ")
+	queryToken := r.URL.Query().Get("token")
+	if queryToken != "" && authToken == "" {
+		r.URL.Query().Del("token")
+		authToken = queryToken
+		rw.Header().Set(s.authHeaderKey, authToken)
+	}
+	t, err := s.decoder.Decode(ctx, strings.TrimPrefix(authToken, "Bearer "))
 	if err != nil {
 		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
 		rw.WriteHeader(http.StatusUnauthorized)
