@@ -32,6 +32,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 	var authToken string
 	if _, ok := r.Header[s.authHeaderKey]; !ok {
 		queryToken := r.URL.Query().Get("token")
+		log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check query token %s", queryToken)
 		if queryToken == "" {
 			log.Debug().Int(statusKey, http.StatusUnauthorized).Str(s.tokenValidatedHeaderKey, "false").Msgf("no auth header %s, early exit", s.authHeaderKey)
 			rw.Header().Set(s.tokenValidatedHeaderKey, "false")
