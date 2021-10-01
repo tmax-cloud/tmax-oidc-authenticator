@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	zLog "github.com/rs/zerolog/log"
@@ -29,11 +30,11 @@ func NewServer(decoder TokenDecoder, authHeaderKey, tokenValidatedHeaderKey stri
 func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := zLog.Ctx(ctx)
-	log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check url %v", r.Header)
 	var authToken string
 	if _, ok := r.Header[s.authHeaderKey]; !ok {
-		log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check query token %v", r.URL.Query())
-		queryToken := r.URL.Query().Get("token")
+		query := r.Header.Clone().Get("X-Forwarded-Uri")
+		originQuery, _ := url.ParseQuery(query)
+		queryToken := originQuery.Get("token")
 		log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check query token %s", queryToken)
 		if queryToken == "" {
 			log.Debug().Int(statusKey, http.StatusUnauthorized).Str(s.tokenValidatedHeaderKey, "false").Msgf("no auth header %s, early exit", s.authHeaderKey)
