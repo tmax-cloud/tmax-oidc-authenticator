@@ -45,7 +45,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 		authToken = strings.TrimPrefix(authHeader, "Bearer ")
 	}
 
-	t, err := s.decoder.Decode(ctx, strings.TrimPrefix(authToken, "Bearer "))
+	t, err := s.decoder.Decode(ctx, authToken)
 	if err != nil {
 		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
 		rw.WriteHeader(http.StatusUnauthorized)
