@@ -39,6 +39,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 			return
 		} else {
 			authToken = queryToken
+			r.URL.Query().Del("token")
 		}
 	} else {
 		authHeader := r.Header.Get(s.authHeaderKey)
