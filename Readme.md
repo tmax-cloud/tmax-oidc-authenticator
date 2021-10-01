@@ -1,9 +1,9 @@
 # Traefik JWT Decode
 
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/SimonSchneider/traefik-jwt-decode)
-![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/simonschneider/traefik-jwt-decode)
-[![Coverage](http://gocover.io/_badge/github.com/SimonSchneider/traefik-jwt-decode/decoder)](http://gocover.io/github.com/SimonSchneider/traefik-jwt-decode/decoder)
-[![Go Report Card](https://goreportcard.com/badge/github.com/SimonSchneider/traefik-jwt-decode)](https://goreportcard.com/report/github.com/SimonSchneider/traefik-jwt-decode)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/jinsoo-youn/traefik-jwt-decode)
+![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/jinsoo-youn/traefik-jwt-decode)
+[![Coverage](http://gocover.io/_badge/github.com/jinsoo-youn/traefik-jwt-decode/decoder)](http://gocover.io/github.com/jinsoo-youn/traefik-jwt-decode/decoder)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jinsoo-youn/traefik-jwt-decode)](https://goreportcard.com/report/github.com/jinsoo-youn/traefik-jwt-decode)
 
 [Traefik Forward auth](https://docs.traefik.io/middlewares/forwardauth/)
 implementation that decodes and validates JWT (JWS) tokens and populates
@@ -62,7 +62,7 @@ docker run \
   -e CLAIM_MAPPINGS="claim-123:header-123,claim-456:header-456" \
   -e JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
   -p 8080:8080 \
-  simonschneider/traefik-jwt-decode:latest
+  jinsoo-youn/traefik-jwt-decode:latest
 ```
 
 minimal (with claim file):
@@ -73,7 +73,7 @@ docker run \
   -v $(pwd)/config.json:/config.json \
   -e JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
   -p 8080:8080 \
-  simonschneider/traefik-jwt-decode:latest
+  jinsoo-youn/traefik-jwt-decode:latest
 ```
 
 ### Configuration reference
