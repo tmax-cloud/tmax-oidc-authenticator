@@ -38,6 +38,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusUnauthorized)
 			return
 		} else {
+			log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "true").Msgf("query token %s, continue", s.authHeaderKey)
 			authToken = queryToken
 			r.URL.Query().Del("token")
 		}
