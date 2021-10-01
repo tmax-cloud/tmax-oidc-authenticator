@@ -31,6 +31,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 	log := zLog.Ctx(ctx)
 	var authToken string
 	if _, ok := r.Header[s.authHeaderKey]; !ok {
+		log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check query token %v", r.URL.Query())
 		queryToken := r.URL.Query().Get("token")
 		log.Debug().Int(statusKey, http.StatusOK).Str(s.tokenValidatedHeaderKey, "false").Msgf("Check query token %s", queryToken)
 		if queryToken == "" {
@@ -44,7 +45,7 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 			r.URL.Query().Del("token")
 		}
 	} else {
-		authHeader := r.Header.Get(s.authHeaderKey)
+		authHeader := r.Header.Clone().Get(s.authHeaderKey)
 		authToken = strings.TrimPrefix(authHeader, "Bearer ")
 	}
 
