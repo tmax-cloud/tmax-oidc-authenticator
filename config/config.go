@@ -100,7 +100,7 @@ func (c *Config) RunServer() (chan error, net.Listener) {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 		mux.Handle("/", histogramMw(loggingMiddleWare(handler)))
-		mux.Handle("/pingtest", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		mux.Handle("/ping", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusOK)
 		}))
 		srv.Handler = mux
@@ -117,7 +117,8 @@ func (c *Config) getServer(r *prom.Registry) *decoder.Server {
 	jwsDec, err := decoder.NewJwsDecoder(jwksURL, claimMappings)
 	if err != nil {
 		if c.forceJwksOnStart.getBool() {
-			panic(err)
+			log.Warn().Err(err).Msg("Auth server has a problem")
+			// panic(err)
 		} else {
 			log.Warn().Err(err).Msg("will try again")
 		}
