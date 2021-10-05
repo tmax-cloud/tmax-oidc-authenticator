@@ -100,6 +100,9 @@ func (c *Config) RunServer() (chan error, net.Listener) {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 		mux.Handle("/", histogramMw(loggingMiddleWare(handler)))
+		mux.Handle("/ping", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			rw.WriteHeader(http.StatusOK)
+		}))
 		srv.Handler = mux
 		done <- srv.Serve(listener)
 		close(done)
