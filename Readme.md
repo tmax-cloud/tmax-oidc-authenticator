@@ -1,9 +1,8 @@
 # Traefik JWT Decode
 
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/jinsoo-youn/traefik-jwt-decode)
-![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/jinsoo-youn/traefik-jwt-decode)
-[![Coverage](http://gocover.io/_badge/github.com/jinsoo-youn/traefik-jwt-decode/decoder)](http://gocover.io/github.com/jinsoo-youn/traefik-jwt-decode/decoder)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jinsoo-youn/traefik-jwt-decode)](https://goreportcard.com/report/github.com/jinsoo-youn/traefik-jwt-decode)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/tmax-cloud/jwt-decode)
+![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/tmax-cloud/jwt-decode)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tmax-cloud/jwt-decode)](https://goreportcard.com/report/github.com/tmax-cloud/jwt-decode)
 
 [Traefik Forward auth](https://docs.traefik.io/middlewares/forwardauth/)
 implementation that decodes and validates JWT (JWS) tokens and populates
