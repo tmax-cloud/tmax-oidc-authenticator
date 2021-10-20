@@ -21,6 +21,8 @@ run: docker
 	docker run -e JWKS_URL='https://www.googleapis.com/oauth2/v3/certs' -v $(shell pwd)/config.json:/config.json $(DOCKER_NAME):$(TAG)
 docker: build
 	docker build $(BUILD_DIR) -t $(DOCKER_NAME):$(TAG)
+push: docker
+	docker push $(DOCKER_NAME):$(TAG)
 build: deps
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux GO111MODULE=on $(GOBUILD) -o $(BINARY_NAME) -v $(MAIN_FILE)
 verify: race bench

@@ -1,7 +1,7 @@
 # Traefik JWT Decode
 
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/tmax-cloud/jwt-decode)
-![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/tmax-cloud/jwt-decode)
+![GitHub tag (latest by date)](https://img.shields.io/docker/v/tmaxcloudck/jwt-decode/5.0.0.0)
+![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/tmaxcloudck/jwt-decode/5.0.0.0)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tmax-cloud/jwt-decode)](https://goreportcard.com/report/github.com/tmax-cloud/jwt-decode)
 
 [Traefik Forward auth](https://docs.traefik.io/middlewares/forwardauth/)
@@ -17,7 +17,7 @@ headers mapped from the claims of the token and an additional (configurable) `jw
 Traefik should be configured to forward these headers via the `authResponseHeaders` which forwards them to the
 end destination.
 
-If no token is present on the request `traefik-jwt-decode`will return 200 and set the header `jwt-token-validated: false`.
+If no token is present on the request `traefik-jwt-decode`will return `UNAUTHORIZED 401` and set the header `jwt-token-validated: false`.
 
 ## Installation and usage
 
