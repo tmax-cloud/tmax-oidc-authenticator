@@ -2,8 +2,10 @@ package decoder
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/lestrrat-go/jwx/jwk"
@@ -35,8 +37,13 @@ func (e UnexpectedClaimTypeError) Error() string {
 // `claimMapping = map[string][string]{ "key123", "headerKey123" }`
 // will cause the claim `key123` in the JWS token to be mapped to `headerKey123` in the decoded token
 func NewJwsDecoder(jwksURL string, claimMapping map[string]string) (TokenDecoder, error) {
+
 	ar := jwk.NewAutoRefresh(context.Background())
-	ar.Configure(jwksURL)
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	ar.Configure(jwksURL, jwk.WithHTTPClient(client))
 	d := jwsDecoder{claimMapping: claimMapping, jwksFetcher: ar, jwksURL: jwksURL}
 	_, err := ar.Fetch(context.Background(), jwksURL)
 	return &d, err
