@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"testing"
 
-	dt "github.com/jinsoo-youn/traefik-jwt-decode/decodertest"
+	dt "github.com/tmax-cloud/traefik-jwt-decode/decodertest"
 
 	"github.com/rs/zerolog"
 
-	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
+	"github.com/tmax-cloud/traefik-jwt-decode/decoder"
 )
 
 const (
