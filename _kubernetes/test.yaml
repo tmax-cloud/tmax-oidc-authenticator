@@ -82,7 +82,7 @@ spec:
               weight: 100
       containers:
       - name: jwt-decode
-        image: dongminjung/jwt-decode:13
+        image: tmaxcloudck/jwt-decode:5.0.0.2
         imagePullPolicy: IfNotPresent
         env:
           - name: JWKS_URL

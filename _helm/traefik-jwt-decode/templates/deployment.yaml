@@ -21,6 +21,10 @@ spec:
         {{- include "traefik-jwt-decode.selectorLabels" . | nindent 8 }}
     spec:
       volumes:
+        - name: {{ include "traefik-jwt-decode.fullname" . }}-token
+          secret:
+            defaultMode: 420
+            secretName: {{ include "traefik-jwt-decode.fullname" . }}-token
         - name: claim-mappings
           configMap:
             name: {{ include "traefik-jwt-decode.fullname" . }}
@@ -50,6 +54,9 @@ spec:
             value: {{ $val | quote }}
           {{- end }}
           volumeMounts:
+            - name: {{ include "traefik-jwt-decode.fullname" . }}-token
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
             - name: claim-mappings
               mountPath: /claim-mappings
       {{- with .Values.nodeSelector }}
