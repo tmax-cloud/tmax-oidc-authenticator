@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: jinsoo-youn/traefik-jwt-decode
+  repository: tmax-cloud/jwt-decode
   pullPolicy: IfNotPresent
   tag: latest
 
@@ -23,6 +23,7 @@ env:
   LOG_TYPE: "json"
   MAX_CACHE_KEYS: "10000"
   CACHE_ENABLED: "true"
+  MULTI_CLUSTER_PREFIX: "multicluster"
 #  CLAIM_MAPPINGS: "claim1:header1"
 
 claimMappings: |

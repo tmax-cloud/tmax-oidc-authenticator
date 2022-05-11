@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
+	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/tmax-cloud/jwt-decode/decoder"
 
 	"github.com/rs/zerolog"
 
@@ -30,8 +32,11 @@ const (
 	AuthHeaderKey = "Authorization"
 	// TokenValidatedHeaderKey for the test
 	TokenValidatedHeaderKey = "jwt-token-validated"
+	multiClusterPrefix      = "multicluster"
+	jwksURL                 = "https://hyperauth.tmaxcloud.org/auth/realms/tmax/protocol/openid-connect/certs"
 )
 
+var client = fake.NewSimpleClientset()
 var (
 	// Cache to be reused between all tests
 	Cache, _ = ristretto.NewCache(&ristretto.Config{
@@ -140,12 +145,13 @@ func (tc *TestConfig) newCachedDecoder(claimMappings map[string]string) decoder.
 
 // UncachedServer creates an uncached server
 func (tc *TestConfig) UncachedServer(claimMappings map[string]string) *decoder.Server {
-	return decoder.NewServer(tc.newJwsDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey)
+	return decoder.NewServer(tc.newJwsDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey, multiClusterPrefix, jwksURL, *client)
 }
 
 // CachedServer creates a cached server
 func (tc *TestConfig) CachedServer(claimMappings map[string]string) *decoder.Server {
-	return decoder.NewServer(tc.newCachedDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey)
+	return decoder.NewServer(tc.newCachedDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey, multiClusterPrefix, jwksURL, *client)
+
 }
 
 // Report the error message to testing if the condition is met

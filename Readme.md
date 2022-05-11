@@ -61,7 +61,7 @@ docker run \
   -e CLAIM_MAPPINGS="claim-123:header-123,claim-456:header-456" \
   -e JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
   -p 8080:8080 \
-  jinsoo-youn/traefik-jwt-decode:latest
+  tmax-cloud/jwt-decode:latest
 ```
 
 minimal (with claim file):
@@ -72,7 +72,7 @@ docker run \
   -v $(pwd)/config.json:/config.json \
   -e JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
   -p 8080:8080 \
-  jinsoo-youn/traefik-jwt-decode:latest
+  tmax-cloud/jwt-decode:latest
 ```
 
 ### Configuration reference

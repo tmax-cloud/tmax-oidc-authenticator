@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
-	dt "github.com/jinsoo-youn/traefik-jwt-decode/decodertest"
+	"github.com/tmax-cloud/jwt-decode/decoder"
+	dt "github.com/tmax-cloud/jwt-decode/decodertest"
 )
 
 func TestCacheAllResponses(t *testing.T) {

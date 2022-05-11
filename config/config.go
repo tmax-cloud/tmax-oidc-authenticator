@@ -18,8 +18,10 @@ import (
 	"github.com/rs/zerolog/hlog"
 
 	"github.com/dgraph-io/ristretto"
-	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
 	"github.com/rs/zerolog"
+	"github.com/tmax-cloud/jwt-decode/decoder"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // Env variable constants
@@ -33,6 +35,8 @@ const (
 	AuthHeaderDefault           = "Authorization"
 	TokenValidatedHeaderEnv     = "TOKEN_VALIDATED_HEADER_KEY"
 	TokenValidatedHeaderDefault = "jwt-token-validated"
+	MultiClusterPrefixEnv       = "MULTI_CLUSTER_PREFIX"
+	MultiClusterPrefixDefault   = "multicluster"
 	PortEnv                     = "PORT"
 	PortDefault                 = "8080"
 	LogLevelEnv                 = "LOG_LEVEL"
@@ -54,6 +58,7 @@ func NewConfig() *Config {
 	c.claimMappingFilePath = withDefault(ClaimMappingFileEnv, ClaimMappingFileDefault)
 	c.authHeader = withDefault(AuthHeaderEnv, AuthHeaderDefault)
 	c.tokenValidatedHeader = withDefault(TokenValidatedHeaderEnv, TokenValidatedHeaderDefault)
+	c.multiClusterPrefix = withDefault(MultiClusterPrefixEnv, MultiClusterPrefixDefault)
 	c.port = withDefault(PortEnv, PortDefault)
 	c.logLevel = withDefault(LogLevelEnv, LogLevelDefault)
 	c.logType = withDefault(LogTypeEnv, LogTypeDefault)
@@ -71,6 +76,7 @@ type Config struct {
 	claimMappingFilePath envVar
 	authHeader           envVar
 	tokenValidatedHeader envVar
+	multiClusterPrefix   envVar
 	port                 envVar
 	logLevel             envVar
 	logType              envVar
@@ -134,7 +140,17 @@ func (c *Config) getServer(r *prom.Registry) *decoder.Server {
 	} else {
 		dec = jwsDec
 	}
-	return decoder.NewServer(dec, c.authHeader.get(), c.tokenValidatedHeader.get())
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Warn().Err(err).Msg("unable to generate in-cluster config.")
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Warn().Err(err).Msg("unable to generate kubernetes clientset.")
+	}
+
+	return decoder.NewServer(dec, c.authHeader.get(), c.tokenValidatedHeader.get(), c.multiClusterPrefix.get(), c.jwksURL.get(), clientset)
 }
 
 func (c *Config) getLogger() (logger zerolog.Logger) {

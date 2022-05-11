@@ -3,9 +3,9 @@ package decoder_test
 import (
 	"testing"
 
-	dt "github.com/jinsoo-youn/traefik-jwt-decode/decodertest"
+	dt "github.com/tmax-cloud/jwt-decode/decodertest"
 
-	"github.com/jinsoo-youn/traefik-jwt-decode/decoder"
+	"github.com/tmax-cloud/jwt-decode/decoder"
 )
 
 func TestInvalidJwksURLGivesWarning(t *testing.T) {
