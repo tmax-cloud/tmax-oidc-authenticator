@@ -19,7 +19,7 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/rs/zerolog"
-	"github.com/tmax-cloud/traefik-jwt-decode/decoder"
+	"github.com/tmax-cloud/jwt-decode/decoder"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )

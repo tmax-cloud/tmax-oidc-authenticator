@@ -14,7 +14,7 @@ import (
 
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/tmax-cloud/traefik-jwt-decode/decoder"
+	"github.com/tmax-cloud/jwt-decode/decoder"
 
 	"github.com/rs/zerolog"
 

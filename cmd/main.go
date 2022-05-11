@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tmax-cloud/traefik-jwt-decode/config"
+	"github.com/tmax-cloud/jwt-decode/config"
 )
 
 func main() {

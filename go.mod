@@ -1,4 +1,4 @@
-module github.com/tmax-cloud/traefik-jwt-decode
+module github.com/tmax-cloud/jwt-decode
 
 go 1.16
 
