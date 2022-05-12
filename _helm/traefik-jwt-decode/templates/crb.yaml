@@ -9,4 +9,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "traefik-jwt-decode.fullname" . }}
-    # namespace: api-gateway-system
+    namespace: {{ .Release.Namespace }}
