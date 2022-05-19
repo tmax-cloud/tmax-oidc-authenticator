@@ -71,9 +71,21 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(tokenByteArr, &decodedTokenMap)
 	issuer := decodedTokenMap["iss"].(string)
 
-	if issuer == "kubernetes/serviceaccount" {
+	isServiceAccountToken := issuer == "kubernetes/serviceaccount"
+	isHyperAuthToken := strings.Contains(s.jwksURL, issuer)
+	isPrometheus := (strings.Contains(uri, "/api/prometheus/")) || (strings.Contains(uri, "/api/prometheus-tenancy/")) || (strings.Contains(uri, "/api/alertmanager/"))
+	isHyperCloudAPIServer := (strings.Contains(uri, "/api/hypercloud/")) || (strings.Contains(uri, "/api/multi-hypercloud/"))
+	isMultiCluster := strings.Split(r.Header.Clone().Get("X-Forwarded-Host"), ".")[0] == s.multiClusterPrefix
+
+	if !isServiceAccountToken && !isHyperAuthToken {
+		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msgf("token with unknown issuer.")
+		rw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if isServiceAccountToken {
 		log.Debug().Msgf("received request uri %s with service account token.", uri)
-		if (strings.Contains(uri, "/api/prometheus/")) || (strings.Contains(uri, "/api/prometheus-tenancy/")) || (strings.Contains(uri, "/api/alertmanager/")) || (strings.Contains(uri, "/api/hypercloud/")) || (strings.Contains(uri, "/api/multi-hypercloud/")) {
+		if isPrometheus || isHyperCloudAPIServer {
 			namespace := decodedTokenMap["kubernetes.io/serviceaccount/namespace"].(string)
 			secretname := decodedTokenMap["kubernetes.io/serviceaccount/secret.name"].(string)
 			secret, err := s.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), secretname, metav1.GetOptions{})
@@ -93,59 +105,54 @@ func (s *Server) DecodeToken(rw http.ResponseWriter, r *http.Request) {
 				rw.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			log.Debug().Int(statusKey, http.StatusOK).Msgf("token from secret %s in %s namespace is the same as the given token.", secretname, namespace)
+			log.Debug().Int(statusKey, http.StatusOK).Msgf("service account token verified, secretname=%s, namespace=%s", secretname, namespace)
 		}
-		rw.Header().Set(s.authHeaderKey, "Bearer "+authToken)
-		rw.Header().Set(s.tokenValidatedHeaderKey, "true")
-		rw.WriteHeader(http.StatusOK)
-		return
 	}
 
-	if (strings.Contains(s.jwksURL, issuer)) && (strings.Split(r.Header.Clone().Get("X-Forwarded-Host"), ".")[0] == s.multiClusterPrefix) {
-		log.Debug().Msgf("sending request to remote cluster %s with HyperAuth token.", strings.Split(uri, "/")[3])
-		re, _ := regexp.Compile("[" + regexp.QuoteMeta(`!#$%&'"*+-/=?^_{|}~().,:;<>[]\`) + "`\\s" + "]")
-		email := decodedTokenMap["email"].(string)
-		emailEscaped := re.ReplaceAllString(strings.Replace(email, "@", "-at-", -1), "-")
-		namespace := strings.Split(uri, "/")[2]
-		clustername := strings.Split(uri, "/")[3]
-		secretname := emailEscaped + "-" + clustername + "-token"
-		secret, err := s.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), secretname, metav1.GetOptions{})
-		if errors.IsNotFound(err) {
-			log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msgf("secret %s not found in %s namespace.", secretname, namespace)
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
+	if isHyperAuthToken {
+		if isMultiCluster || isPrometheus || isHyperCloudAPIServer {
+			t, err := s.decoder.Decode(ctx, authToken)
+			if err != nil {
+				log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
+				rw.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			if err = t.Validate(); err != nil {
+				log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to validate token")
+				rw.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			for k, v := range t.Claims {
+				rw.Header().Set(k, v)
+				log.Debug().Str(k, v)
+			}
 		}
-		if err != nil {
-			log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msgf("error getting secret %s in %s namespace: %s", secretname, namespace, err.Error())
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
+		if isMultiCluster {
+			log.Debug().Msgf("request to remote cluster %s.", strings.Split(uri, "/")[3])
+			re, _ := regexp.Compile("[" + regexp.QuoteMeta(`!#$%&'"*+-/=?^_{|}~().,:;<>[]\`) + "`\\s" + "]")
+			email := decodedTokenMap["email"].(string)
+			emailEscaped := re.ReplaceAllString(strings.Replace(email, "@", "-at-", -1), "-")
+			namespace := strings.Split(uri, "/")[2]
+			clustername := strings.Split(uri, "/")[3]
+			secretname := emailEscaped + "-" + clustername + "-token"
+			secret, err := s.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), secretname, metav1.GetOptions{})
+			if errors.IsNotFound(err) {
+				log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msgf("secret %s not found in %s namespace.", secretname, namespace)
+				rw.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			if err != nil {
+				log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msgf("error getting secret %s in %s namespace: %s", secretname, namespace, err.Error())
+				rw.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			authToken = string(secret.Data["token"][:])
+			log.Debug().Int(statusKey, http.StatusOK).Msgf("using token from secret %s in namespace %s.", secretname, namespace)
 		}
-		tokenFromSecret := string(secret.Data["token"][:])
-		rw.Header().Set(s.tokenValidatedHeaderKey, "true")
-		rw.Header().Set(s.authHeaderKey, "Bearer "+tokenFromSecret)
-		log.Debug().Int(statusKey, http.StatusOK).Msgf("using token from secret %s in namespace %s.", secretname, namespace)
-		rw.WriteHeader(http.StatusOK)
-		return
 	}
 
-	t, err := s.decoder.Decode(ctx, authToken)
-	if err != nil {
-		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
-		rw.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	if err = t.Validate(); err != nil {
-		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to validate token")
-		rw.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	for k, v := range t.Claims {
-		rw.Header().Set(k, v)
-		log.Debug().Str(k, v)
-	}
-	rw.Header().Set(s.tokenValidatedHeaderKey, "true")
 	rw.Header().Set(s.authHeaderKey, "Bearer "+authToken)
-	log.Debug().Str(s.tokenValidatedHeaderKey, "true")
+	rw.Header().Set(s.tokenValidatedHeaderKey, "true")
 	log.Debug().Int(statusKey, http.StatusOK).Msg("ok")
 	rw.WriteHeader(http.StatusOK)
 	return
