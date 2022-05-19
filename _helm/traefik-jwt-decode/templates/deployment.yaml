@@ -25,9 +25,6 @@ spec:
           secret:
             defaultMode: 420
             secretName: api-gateway-token
-        - name: claim-mappings
-          configMap:
-            name: {{ include "traefik-jwt-decode.fullname" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -57,8 +54,6 @@ spec:
             - name: api-gateway-token
               mountPath: /var/run/secrets/kubernetes.io/serviceaccount
               readOnly: true
-            - name: claim-mappings
-              mountPath: /claim-mappings
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
