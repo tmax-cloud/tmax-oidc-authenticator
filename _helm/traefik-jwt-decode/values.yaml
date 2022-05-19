@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: tmaxcloudck/jwt-decode
   pullPolicy: IfNotPresent
-  tag: 5.0.0.2
+  tag: 5.0.0.3
 
 nameOverride: ""
 fullnameOverride: ""
