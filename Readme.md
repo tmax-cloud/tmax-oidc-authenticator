@@ -1,109 +1,65 @@
-# Traefik JWT Decode
+# JWT Decode
 
-![GitHub tag (latest by date)](https://img.shields.io/docker/v/tmaxcloudck/jwt-decode/5.0.0.0)
-![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/tmaxcloudck/jwt-decode/5.0.0.0)
+![GitHub tag (latest by date)](https://img.shields.io/docker/v/tmaxcloudck/jwt-decode/5.0.0.3)
+![Docker Image Size (latest by date)](https://img.shields.io/docker/image-size/tmaxcloudck/jwt-decode/5.0.0.3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tmax-cloud/jwt-decode)](https://goreportcard.com/report/github.com/tmax-cloud/jwt-decode)
 
-[Traefik Forward auth](https://docs.traefik.io/middlewares/forwardauth/)
-implementation that decodes and validates JWT (JWS) tokens and populates
-headers with configurable claims from the token.
-The tokens are validated using jwks, checked for expiration and cached.
+jwt-decode는 HyperCloud API Gateway에서 token의 검증이나 교체가 필요한 경우에 사용되는 middleware이다.
+- 어떠한 케이스에 이 middleware를 사용할지는 Ingress 혹은 IngressRoute를 통해 설정할 수 있다.
+- middleware가 사용되는 상황이라면, API Gateway의 요청이 middleware를 거쳐 가공된 후 다시 API Gateway로 전달된다.
+- 참고 : [Traefik Proxy Middleware Overview](https://doc.traefik.io/traefik/middlewares/overview/)
 
-If the token is invalid, ie. can't be verified or is expired `traefik-jwt-decode`
-will respond with a `UNAUTHORIZED 401`.
+jwt-decode는 그 중 ForwardAuth에 속하는 종류의 middleware로, 원본은 SimonSchneider의 [traefik-jwt-decode](https://github.com/SimonSchneider/traefik-jwt-decode)이다.
+원작자가 의도한 바는 아래와 같이 요약된다.
+- Implementation that decodes and validates JWT (JWS) tokens and populates headers with configurable claims from the token.
+- The tokens are validated using jwks, checked for expiration and cached.
+- 참고 : [Traefik ForwardAuth Documentation](https://doc.traefik.io/traefik/middlewares/http/forwardauth/)
 
-If the token is valid `traefik-jwt-decode` will respond with a `OK 200` and
-headers mapped from the claims of the token and an additional (configurable) `jwt-token-validated: true` header. 
-Traefik should be configured to forward these headers via the `authResponseHeaders` which forwards them to the
-end destination.
 
-If no token is present on the request `traefik-jwt-decode`will return `UNAUTHORIZED 401` and set the header `jwt-token-validated: false`.
+이 미들웨어가 토큰을 처리하는 방식은 아래와 같다.
 
-## Installation and usage
+- token의 issuer가 kubernetes/serviceaccount, hyperauth 인 경우가 아니라면 `UNAUTHORIZED 401`.
+- token의 issuer가 kubernetes/serviceaccount 인 경우
+  - prometheus, alert manager, hypercloud api server로의 요청인 경우, token을 검증한다.
+    - 여기서의 token 검증은, 해당 token에 들어있는 namespace와 name 정보를 사용하여 실제로 kubernetes cluster에 해당 token이 존재하고 그 값이 일치하는지 여부를 확인하는 것이다.
+    - token 검증에 실패하면 `UNAUTHORIZED 401`.
+  - 그 외의 경우는 추후 kubernetes api server에서 token이 검증될 것이기 때문에, jwt-decode 에서는 검증하지 않는다.
+- token의 issuer가 hyperauth인 경우
+  (예 : `https://hyperauth.tmaxcloud.org/auth/realms/tmax`)
+  - prometheus, alert manager, hypercloud api server로의 요청이거나 remote cluster로의 요청인 경우, token을 검증한다.
+    - 여기서의 token 검증은, 해당 token이 올바르고 유효한 hyperauth token이 맞는지 여부를 확인하는 것이다.
+    - token 검증에 실패하면 `UNAUTHORIZED 401`.
+  - remote cluster로의 요청인 경우, 아래의 규칙에 따라 secret을 조회하고, HTTP Request의 Authorization 헤더를 secret 안에 들어있는 token으로 교체한다.
+    - {namespace} 하위의 {escaped email}-{remote cluster name}-token
+      - namespace : remote cluster가 속한 namespace의 이름
+      - escaped email : 요청을 보내는 사람의 email 주소에서 `@`는 `-at-`으로, 그 외의 특수문자는 모두 `-`으로 교체한 문자열. 예) `hc-admin@tmax.co.kr` -> `hc-admin-at-tmax-co-kr`
+      - remote cluster name : remote cluster의 이름
+    - secret의 data에서 key로 `token`을, value로 `{token 문자열}`을 사용한다고 가정한다.
+    - secret의 type은 `Opaque`든 `kubernetes.io/service-account-token`이든 상관이 없다.
+    - remote cluster에서 사용하고자 하는 service account token을 위 규칙에 따라 secret으로 생성해두면, hyperauth token 대신에 이렇게 등록된 token을 사용하여 remote cluster로 요청을 보낼 수 있다.
+  - 그 외의 경우는 추후 kubernetes api server에서 token이 검증될 것이기 때문에, jwt-decode 에서는 검증하지 않는다.
 
-### Minimal with helm
+token 검증에 실패한 경우를 제외하면, HTTP 헤더에 `jwt-token-validated: true`가 추가된다. (jwt-token-validated 대신 다른 문자열을 사용할 수도 있다.)
 
-The below example will deploy `traefik-jwt-decode` into kubernetes which 
-will map the claims `email` and `scopes` into the headers `jwt-token-email` and
-`jwt-token-scopes`.
+Traefik should be configured to forward these headers via the `authResponseHeaders` which forwards them to the end destination.
 
-It will then create a traefik forwardAuth middleware that forwards the 
-`jwt-token-validated`, `jwt-token-email` and `jwt-token-scopes` to the upstream service.
+## 설정 정보
+
+필수적인 설정값 : `JWKS_URL`
+- url pointing at the jwks json file (https://auth0.com/docs/tokens/concepts/jwks)
+- 예시 값 = `https://hyperauth.tmaxcloud.org/auth/realms/tmax/protocol/openid-connect/certs`
+
+
+기본값이 제공되는 설정값 :
 ```
-cd _helm
-
-helm install traefik-jwt-decode traefik-jwt-decode \
-  --set env.JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
-  --set env.CLAIM_MAPPINGS="email:jwt-token-email,scopes:jwt-token-scopes"
-
-cat <<EOF >> traefik-auth-resource.yaml
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: jwt-decode-auth
-spec:
-  forwardAuth:
-    address: http://traefik-jwt-decode:8080
-    authResponseHeaders:
-      - jwt-token-validated
-      - jwt-token-email
-      - jwt-token-scopes
-EOF
-
-kubectl apply -f traefik-auth-resource.yaml
-```
-
-### Configuring and running the docker image:
-
-minimal (with claimMapping env variable)
-```
-docker run \
-  -e CLAIM_MAPPINGS="claim-123:header-123,claim-456:header-456" \
-  -e JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
-  -p 8080:8080 \
-  tmax-cloud/jwt-decode:latest
-```
-
-minimal (with claim file):
-```
-echo "{ \"claim-123\": \"header-123\" }" > config.json
-
-docker run \
-  -v $(pwd)/config.json:/config.json \
-  -e JWKS_URL="https://www.googleapis.com/oauth2/v3/certs" \
-  -p 8080:8080 \
-  tmax-cloud/jwt-decode:latest
-```
-
-### Configuration reference
-
-required configurations:
-```
-JWKS_URL
-url pointing at the jwks json file (https://auth0.com/docs/tokens/concepts/jwks)
-```
-
-default configurations
-```
-CLAIM_MAPPING_FILE_PATH    = config.json
+CLAIM_MAPPING_FILE_PATH    = config.json         // 우리는 주로 `/claim-mappings/config.json`를 사용한다.
 AUTH_HEADER_KEY            = Authorization
 TOKEN_VALIDATED_HEADER_KEY = jwt-token-validated
 PORT                       = 8080
-LOG_LEVEL                  = info                = trace | debug | info | warn | crit
-LOG_TYPE                   = json                = json | pretty
+LOG_LEVEL                  = info                = trace | debug | info | warn | crit // 우리는 주로 `debug`를 사용한다.
+LOG_TYPE                   = json                = json | pretty // 우리의 설정에서는 `pretty`를 사용
 MAX_CACHE_KEYS             = 10000
 CACHE_ENABLED              = true
 FORCE_JWKS_ON_START        = true
-```
-
-optional configurations
-```
-CLAIM_MAPPINGS=claim1:header1,claim2:header2
-set up claim mappings by env, on the format
-the above corresponds to the json
-
-{
-  "claim1": "header1",
-  "claim2": "header2"
-}
+MULTI_CLUSTER_PREFIX       = multicluster        // remote cluster로 보내는 요청의 최하위 서브도메인 문자열
 ```
