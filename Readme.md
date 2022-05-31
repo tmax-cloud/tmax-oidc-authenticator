@@ -33,7 +33,8 @@ jwt-decode는 그 중 ForwardAuth 기능을 수행하는 middleware로써, 원�
   - remote cluster로의 요청인 경우, 아래의 규칙에 따라 secret을 조회하고, HTTP Request의 Authorization 헤더를 secret 안에 들어있는 token으로 교체한다.
     - 조회 대상 secret = {namespace} 하위의 {escaped email}-{remote cluster name}-token
       - {namespace} : remote cluster가 속한 namespace의 이름
-      - {escaped email} : 요청을 보내는 사람의 email 주소에서 `@`는 `-at-`으로, 그 외 특수문자는 모두 `-`으로 교체한 문자열. (예 : `hc-admin@tmax.co.kr` -> `hc-admin-at-tmax-co-kr`)
+      - {escaped email} : 요청을 보내는 사람의 email 주소에서 `@`는 `-at-`으로, 그 외 특수문자는 모두 `-`으로 교체한 문자열.
+        (예 : `hc-admin@tmax.co.kr` -> `hc-admin-at-tmax-co-kr`)
       - {remote cluster name} : remote cluster의 이름
     - remote cluster에서 사용하고자 하는 service account token을 위 규칙에 따라 secret으로 생성해두면, hyperauth token 대신에 이렇게 등록된 token을 사용하여 remote cluster로 요청을 보낼 수 있다.
       - secret의 data에서 key로 `token`을, value로 `{token 문자열}`을 사용한다고 가정한다.
