@@ -5,21 +5,24 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/tmax-cloud/jwt-decode)](https://goreportcard.com/report/github.com/tmax-cloud/jwt-decode)
 
 jwt-decode는 HyperCloud API Gateway에서 token의 검증이나 교체가 필요한 경우에 사용되는 middleware이다.
-- 어떠한 케이스에 이 middleware를 사용할지는 Ingress 혹은 IngressRoute를 통해 설정할 수 있다.
-- middleware가 사용되는 상황이라면, API Gateway의 요청이 middleware를 거쳐 가공된 후 다시 API Gateway로 전달된다.
+- 어떠한 상황에 이 middleware를 사용할지는 Ingress 혹은 IngressRoute를 통해 설정한다.
+- middleware가 사용되는 상황이면, API Gateway의 요청이 middleware를 거쳐 가공된 후 다시 API Gateway로 되돌아간다.
 - 참고 : [Traefik Proxy Middleware Overview](https://doc.traefik.io/traefik/middlewares/overview/)
+![middleware](https://doc.traefik.io/traefik/assets/img/middleware/overview.png)
 
-jwt-decode는 그 중 ForwardAuth에 속하는 종류의 middleware로, 원본은 SimonSchneider의 [traefik-jwt-decode](https://github.com/SimonSchneider/traefik-jwt-decode)이다.
+jwt-decode는 그 중 ForwardAuth 기능을 수행하는 middleware로써, 원본 프로젝트는 [SimonSchneider](https://github.com/SimonSchneider)의 [traefik-jwt-decode](https://github.com/SimonSchneider/traefik-jwt-decode)이다.
 원작자가 의도한 바는 아래와 같이 요약된다.
 - Implementation that decodes and validates JWT (JWS) tokens and populates headers with configurable claims from the token.
 - The tokens are validated using jwks, checked for expiration and cached.
 - 참고 : [Traefik ForwardAuth Documentation](https://doc.traefik.io/traefik/middlewares/http/forwardauth/)
+![forwardauth](https://doc.traefik.io/traefik/assets/img/middleware/authforward.png)
 
 
 이 미들웨어가 토큰을 처리하는 방식은 아래와 같다.
 
-- token의 issuer가 kubernetes/serviceaccount, hyperauth 인 경우가 아니라면 `UNAUTHORIZED 401`.
-- token의 issuer가 kubernetes/serviceaccount 인 경우
+- token의 issuer가 serviceaccount, hyperauth 인 경우가 아니라면 `UNAUTHORIZED 401`.
+- token의 issuer가 serviceaccount 인 경우
+  (정확히는 `kubernetes/serviceaccount`)
   - prometheus, alert manager, hypercloud api server로의 요청인 경우, token을 검증한다.
     - 여기서의 token 검증은, 해당 token에 들어있는 namespace와 name 정보를 사용하여 실제로 kubernetes cluster에 해당 token이 존재하고 그 값이 일치하는지 여부를 확인하는 것이다.
     - token 검증에 실패하면 `UNAUTHORIZED 401`.
