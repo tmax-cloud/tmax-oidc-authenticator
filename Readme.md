@@ -31,16 +31,17 @@ jwt-decode는 그 중 ForwardAuth 기능을 수행하는 middleware로써, 원�
     - 여기서의 token 검증은, 해당 token이 올바르고 유효한 hyperauth token이 맞는지 여부를 확인하는 것이다.
     - token 검증에 실패하면 `UNAUTHORIZED 401`.
   - remote cluster로의 요청인 경우, 아래의 규칙에 따라 secret을 조회하고, HTTP Request의 Authorization 헤더를 secret 안에 들어있는 token으로 교체한다.
-    - {namespace} 하위의 {escaped email}-{remote cluster name}-token
-      - namespace : remote cluster가 속한 namespace의 이름
-      - escaped email : 요청을 보내는 사람의 email 주소에서 `@`는 `-at-`으로, 그 외 특수문자는 모두 `-`으로 교체한 문자열. (예 : `hc-admin@tmax.co.kr` -> `hc-admin-at-tmax-co-kr`)
-      - remote cluster name : remote cluster의 이름
-    - secret의 data에서 key로 `token`을, value로 `{token 문자열}`을 사용한다고 가정한다.
-    - secret의 type은 `Opaque`든 `kubernetes.io/service-account-token`이든 상관이 없다.
+    - 조회 대상 secret = {namespace} 하위의 {escaped email}-{remote cluster name}-token
+      - {namespace} : remote cluster가 속한 namespace의 이름
+      - {escaped email} : 요청을 보내는 사람의 email 주소에서 `@`는 `-at-`으로, 그 외 특수문자는 모두 `-`으로 교체한 문자열. (예 : `hc-admin@tmax.co.kr` -> `hc-admin-at-tmax-co-kr`)
+      - {remote cluster name} : remote cluster의 이름
     - remote cluster에서 사용하고자 하는 service account token을 위 규칙에 따라 secret으로 생성해두면, hyperauth token 대신에 이렇게 등록된 token을 사용하여 remote cluster로 요청을 보낼 수 있다.
+      - secret의 data에서 key로 `token`을, value로 `{token 문자열}`을 사용한다고 가정한다.
+      - secret의 type은 `Opaque`든 `kubernetes.io/service-account-token`이든 상관이 없다.
   - 그 외의 경우는 추후 kubernetes api server에서 token이 검증될 것이기 때문에, jwt-decode 에서는 검증하지 않는다.
 
-token 검증에 실패한 경우를 제외하면, HTTP 헤더에 `jwt-token-validated: true`가 추가된다. (jwt-token-validated 대신 다른 문자열을 사용할 수도 있다.)
+token 검증에 실패한 경우를 제외하면, HTTP 헤더에 `jwt-token-validated: true`가 추가된다.
+(`TOKEN_VALIDATED_HEADER_KEY` 설정을 통해 `jwt-token-validated` 대신 다른 문자열을 사용할 수도 있다.)
 
 Traefik should be configured to forward these headers via the `authResponseHeaders` which forwards them to the end destination.
 
