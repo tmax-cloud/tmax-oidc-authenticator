@@ -65,4 +65,5 @@ MAX_CACHE_KEYS             = 10000
 CACHE_ENABLED              = true
 FORCE_JWKS_ON_START        = true
 MULTI_CLUSTER_PREFIX       = multicluster        // remote cluster로 보내는 요청의 최하위 서브도메인 문자열
+SECRET_CACHE_TTL           = 300                 // 조회된 token secret이 cache될 시간 (seconds)
 ```

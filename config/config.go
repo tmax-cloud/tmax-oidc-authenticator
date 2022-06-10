@@ -37,6 +37,8 @@ const (
 	TokenValidatedHeaderDefault = "jwt-token-validated"
 	MultiClusterPrefixEnv       = "MULTI_CLUSTER_PREFIX"
 	MultiClusterPrefixDefault   = "multicluster"
+	SecretCacheTTLEnv           = "SECRET_CACHE_TTL"
+	SecretCacheTTLDefault       = "300"
 	PortEnv                     = "PORT"
 	PortDefault                 = "8080"
 	LogLevelEnv                 = "LOG_LEVEL"
@@ -59,6 +61,7 @@ func NewConfig() *Config {
 	c.authHeader = withDefault(AuthHeaderEnv, AuthHeaderDefault)
 	c.tokenValidatedHeader = withDefault(TokenValidatedHeaderEnv, TokenValidatedHeaderDefault)
 	c.multiClusterPrefix = withDefault(MultiClusterPrefixEnv, MultiClusterPrefixDefault)
+	c.secretCacheTTL = withDefault(SecretCacheTTLEnv, SecretCacheTTLDefault)
 	c.port = withDefault(PortEnv, PortDefault)
 	c.logLevel = withDefault(LogLevelEnv, LogLevelDefault)
 	c.logType = withDefault(LogTypeEnv, LogTypeDefault)
@@ -77,6 +80,7 @@ type Config struct {
 	authHeader           envVar
 	tokenValidatedHeader envVar
 	multiClusterPrefix   envVar
+	secretCacheTTL       envVar
 	port                 envVar
 	logLevel             envVar
 	logType              envVar
@@ -149,8 +153,12 @@ func (c *Config) getServer(r *prom.Registry) *decoder.Server {
 	if err != nil {
 		log.Warn().Err(err).Msg("unable to generate kubernetes clientset.")
 	}
-
-	return decoder.NewServer(dec, c.authHeader.get(), c.tokenValidatedHeader.get(), c.multiClusterPrefix.get(), c.jwksURL.get(), clientset)
+	secretCacheTTL, err := strconv.ParseInt(c.secretCacheTTL.get(), 10, 64)
+	log.Warn().Err(err).Msg("unable to convert string to int64.")
+	if err != nil {
+		log.Warn().Err(err).Msg("unable to convert string to int64.")
+	}
+	return decoder.NewServer(dec, c.authHeader.get(), c.tokenValidatedHeader.get(), c.multiClusterPrefix.get(), c.jwksURL.get(), clientset, secretCacheTTL)
 }
 
 func (c *Config) getLogger() (logger zerolog.Logger) {
@@ -307,7 +315,7 @@ func (e envVar) getInt64() (val int64) {
 	str := e.get()
 	val, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
-		panic(fmt.Errorf("cache size has to be an integer: %w", err))
+		panic(fmt.Errorf("has to be an integer: %w", err))
 	}
 	return
 }

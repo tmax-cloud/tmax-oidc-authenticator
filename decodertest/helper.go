@@ -33,6 +33,7 @@ const (
 	// TokenValidatedHeaderKey for the test
 	TokenValidatedHeaderKey = "jwt-token-validated"
 	multiClusterPrefix      = "multicluster"
+	secretCacheTTL          = 300
 	jwksURL                 = "https://hyperauth.tmaxcloud.org/auth/realms/tmax/protocol/openid-connect/certs"
 )
 
@@ -145,12 +146,12 @@ func (tc *TestConfig) newCachedDecoder(claimMappings map[string]string) decoder.
 
 // UncachedServer creates an uncached server
 func (tc *TestConfig) UncachedServer(claimMappings map[string]string) *decoder.Server {
-	return decoder.NewServer(tc.newJwsDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey, multiClusterPrefix, jwksURL, *client)
+	return decoder.NewServer(tc.newJwsDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey, multiClusterPrefix, jwksURL, *client, secretCacheTTL)
 }
 
 // CachedServer creates a cached server
 func (tc *TestConfig) CachedServer(claimMappings map[string]string) *decoder.Server {
-	return decoder.NewServer(tc.newCachedDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey, multiClusterPrefix, jwksURL, *client)
+	return decoder.NewServer(tc.newCachedDecoder(claimMappings), AuthHeaderKey, TokenValidatedHeaderKey, multiClusterPrefix, jwksURL, *client, secretCacheTTL)
 
 }
 

@@ -24,6 +24,7 @@ env:
   MAX_CACHE_KEYS: "10000"
   CACHE_ENABLED: "true"
   MULTI_CLUSTER_PREFIX: "multicluster"
+  SECRET_CACHE_TTL: "300"
 #  CLAIM_MAPPINGS: "claim1:header1"
 
 claimMappings: |

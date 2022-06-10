@@ -39,6 +39,8 @@ spec:
               value: "8080"
             - name: TOKEN_VALIDATED_HEADER_KEY
               value: jwt-token-validated
+            - name: SECRET_CACHE_TTL
+              value: "300"
           image: tmaxcloudck/jwt-decode:5.0.0.0
           imagePullPolicy: IfNotPresent
           name: traefik-jwt-decode
