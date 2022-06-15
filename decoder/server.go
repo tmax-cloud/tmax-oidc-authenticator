@@ -40,12 +40,10 @@ type CachedToken struct {
 	validUntil int64
 }
 
-var cachedTokenMap map[string]CachedToken
-
 // NewServer returns a new server that will decode the header with key authHeaderKey
 // with the given TokenDecoder decoder.
 func NewServer(decoder TokenDecoder, authHeaderKey, tokenValidatedHeaderKey string, multiClusterPrefix string, jwksURL string, clientset *kubernetes.Clientset, secretCacheTTL int64) *Server {
-	cachedTokenMap = map[string]CachedToken{}
+	cachedTokenMap := map[string]CachedToken{}
 	return &Server{decoder: decoder, authHeaderKey: authHeaderKey, tokenValidatedHeaderKey: tokenValidatedHeaderKey, multiClusterPrefix: multiClusterPrefix, jwksURL: jwksURL, clientset: clientset, cachedTokenMap: cachedTokenMap, secretCacheTTL: secretCacheTTL}
 }
 
