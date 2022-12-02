@@ -100,7 +100,7 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 			User: authenticationv1.UserInfo{
 				Username: decodedTokenMap["preferred_username"].(string),
 				UID:      decodedTokenMap["sub"].(string),
-				Groups:   []string{"system:authenticated"},
+				Groups:   []string{"system:authenticated", "system:authenticated:oauth"},
 			},
 		},
 	})
