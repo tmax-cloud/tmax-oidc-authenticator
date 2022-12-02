@@ -87,6 +87,10 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
+	tokenByteArr, err := jwt.DecodeSegment(strings.Split(authToken, ".")[1])
+	var decodedTokenMap map[string]interface{}
+	json.Unmarshal(tokenByteArr, &decodedTokenMap)
 	// all responses from here down have JSON bodies
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -94,9 +98,9 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 		Status: authenticationv1.TokenReviewStatus{
 			Authenticated: true,
 			User: authenticationv1.UserInfo{
-				Username: t.Claims["preferred_username"],
-				UID:      t.Claims["iss"],
-				Groups:   []string{t.Claims["groups"]},
+				Username: decodedTokenMap["preferred_username"].(string),
+				UID:      decodedTokenMap["sub"].(string),
+				Groups:   []string{decodedTokenMap["groups"].(string)},
 			},
 		},
 	})
