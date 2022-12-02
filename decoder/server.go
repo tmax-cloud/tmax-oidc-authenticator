@@ -94,13 +94,19 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 	// all responses from here down have JSON bodies
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
+	groups := []string{}
+	for _, v := range decodedTokenMap["group"].([]interface{}) {
+		groups := append(groups, v.(string))
+	}
+
 	json.NewEncoder(w).Encode(authenticationv1.TokenReview{
 		Status: authenticationv1.TokenReviewStatus{
 			Authenticated: true,
 			User: authenticationv1.UserInfo{
 				Username: decodedTokenMap["preferred_username"].(string),
 				UID:      decodedTokenMap["sub"].(string),
-				Groups:   []string{"system:authenticated", "system:authenticated:oauth"},
+				Groups:   groups,
+				//Groups:   []string{"system:authenticated", "system:authenticated:oauth"},
 			},
 		},
 	})
