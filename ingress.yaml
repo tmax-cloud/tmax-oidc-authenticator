@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tmax-oidc-authenticator
+  namespace: api-gateway-system
+spec:
+  ingressClassName: tmax-cloud
+  rules:
+  - host: oidc-authenticator.tmaxcloud.org
+    http:
+      paths:
+      - path: /authenticate
+        pathType: Prefix
+        backend:
+          service:
+            name: jwt-decode-auth
+            port:
+              number: 8080
+  tls:
+  - hosts:
+    - oidc-authenticator.tmaxcloud.org
