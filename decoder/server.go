@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	authenticationv1 "k8s.io/api/authentication/v1"
 )
 
 const (
@@ -47,6 +49,57 @@ type CachedToken struct {
 func NewServer(decoder TokenDecoder, authHeaderKey, tokenValidatedHeaderKey string, multiClusterPrefix string, jwksURL string, clientset *kubernetes.Clientset, secretCacheTTL int64, validateAPIPaths string, usernameClaim string) *Server {
 	cachedTokenMap := map[string]CachedToken{}
 	return &Server{decoder: decoder, authHeaderKey: authHeaderKey, tokenValidatedHeaderKey: tokenValidatedHeaderKey, multiClusterPrefix: multiClusterPrefix, jwksURL: jwksURL, clientset: clientset, cachedTokenMap: cachedTokenMap, secretCacheTTL: secretCacheTTL, validateAPIPaths: validateAPIPaths, usernameClaim: usernameClaim}
+}
+
+func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := zLog.Ctx(ctx)
+	// If the request is not a POST, return a 405 Method Not Allowed error.
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// If the request body is not a JSON, return a 400 Bad Request error.
+	if r.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	// Decode the request body into a tokenReview.
+	var tokenReview authenticationv1.TokenReview
+	if err := json.NewDecoder(r.Body).Decode(&tokenReview); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	authToken := tokenReview.Spec.Token
+
+	t, err := s.decoder.Decode(ctx, authToken)
+	if err != nil {
+		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if err = t.Validate(); err != nil {
+		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to validate token")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	// all responses from here down have JSON bodies
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	json.NewEncoder(w).Encode(authenticationv1.TokenReview{
+		Status: authenticationv1.TokenReviewStatus{
+			Authenticated: true,
+			User: authenticationv1.UserInfo{
+				Username: t.Claims["preferred_username"],
+				UID:      t.Claims["iss"],
+				Groups:   []string{t.Claims["groups"]},
+			},
+		},
+	})
 }
 
 // DecodeToken http handler

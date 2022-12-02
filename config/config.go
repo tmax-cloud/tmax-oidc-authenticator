@@ -105,6 +105,7 @@ func (c *Config) RunServer() (chan error, net.Listener) {
 	registry := prom.NewRegistry()
 	server := c.getServer(registry)
 	var handler http.HandlerFunc = server.DecodeToken
+	var handlerWebhook http.HandlerFunc = server.AuthenticateEndpoint
 	histogramMw := histogramMiddleware(registry)
 	loggingMiddleWare := hlog.NewHandler(logger)
 	serve := fmt.Sprintf(":%s", c.port.get())
@@ -121,6 +122,7 @@ func (c *Config) RunServer() (chan error, net.Listener) {
 		mux.Handle("/ping", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusOK)
 		}))
+		mux.Handle("/authenicate", histogramMw(loggingMiddleWare(handlerWebhook)))
 		srv.Handler = mux
 		done <- srv.Serve(listener)
 		close(done)
