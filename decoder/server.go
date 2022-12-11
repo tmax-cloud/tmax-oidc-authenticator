@@ -96,8 +96,8 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	groups := []string{"dfe", "token"}
 
-	for _, v := range decodedTokenMap["group"].([]string) {
-		groups = append(groups, v)
+	for _, v := range decodedTokenMap["group"].([]interface{}) {
+		groups = append(groups, v.(string))
 	}
 
 	json.NewEncoder(w).Encode(authenticationv1.TokenReview{
