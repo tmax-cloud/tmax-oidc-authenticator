@@ -94,9 +94,10 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 	// all responses from here down have JSON bodies
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	groups := []string{}
-	for _, v := range decodedTokenMap["group"].([]interface{}) {
-		groups = append(groups, v.(string))
+	groups := []string{"dfe", "token"}
+
+	for _, v := range decodedTokenMap["group"].([]string) {
+		groups = append(groups, v)
 	}
 
 	json.NewEncoder(w).Encode(authenticationv1.TokenReview{
@@ -107,6 +108,9 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 				UID:      decodedTokenMap["sub"].(string),
 				Groups:   groups,
 				//Groups:   []string{"system:authenticated", "system:authenticated:oauth"},
+				Extra: map[string]authenticationv1.ExtraValue{
+					"email": []string{decodedTokenMap["email"].(string)},
+				},
 			},
 		},
 	})

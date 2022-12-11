@@ -122,6 +122,7 @@ func (c *Config) RunServer() (chan error, net.Listener) {
 		mux.Handle("/ping", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusOK)
 		}))
+		// Add webhook handler for authentication
 		mux.Handle("/authenticate", histogramMw(loggingMiddleWare(handlerWebhook)))
 		srv.Handler = mux
 		done <- srv.Serve(listener)
