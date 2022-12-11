@@ -78,6 +78,7 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 	t, err := s.decoder.Decode(ctx, authToken)
 	if err != nil {
 		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(authenticationv1.TokenReview{
 			Status: authenticationv1.TokenReviewStatus{
 				Authenticated: false,
@@ -90,6 +91,7 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	if err = t.Validate(); err != nil {
 		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to validate token")
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(authenticationv1.TokenReview{
 			Status: authenticationv1.TokenReviewStatus{
 				Authenticated: false,
