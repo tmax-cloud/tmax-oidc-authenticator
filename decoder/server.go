@@ -78,13 +78,25 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 	t, err := s.decoder.Decode(ctx, authToken)
 	if err != nil {
 		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to decode token")
-		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(authenticationv1.TokenReview{
+			Status: authenticationv1.TokenReviewStatus{
+				Authenticated: false,
+				Error:         err.Error(),
+			},
+		})
+		//w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	if err = t.Validate(); err != nil {
 		log.Warn().Err(err).Int(statusKey, http.StatusUnauthorized).Msg("unable to validate token")
-		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(authenticationv1.TokenReview{
+			Status: authenticationv1.TokenReviewStatus{
+				Authenticated: false,
+				Error:         err.Error(),
+			},
+		})
+		//w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -94,8 +106,7 @@ func (s *Server) AuthenticateEndpoint(w http.ResponseWriter, r *http.Request) {
 	// all responses from here down have JSON bodies
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	groups := []string{"dfe", "token"}
-
+	groups := []string{}
 	for _, v := range decodedTokenMap["group"].([]interface{}) {
 		groups = append(groups, v.(string))
 	}
